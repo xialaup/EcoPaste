@@ -1,34 +1,28 @@
 import { WINDOW_PLUGIN } from "@/constants";
+import type { WindowLabel } from "@/types/plugin";
 import { invoke } from "@tauri-apps/api";
-import { appWindow } from "@tauri-apps/api/window";
-import { debounce } from "lodash-es";
-
+import { emit } from "@tauri-apps/api/event";
+import {
+	PhysicalPosition,
+	appWindow,
+	availableMonitors,
+} from "@tauri-apps/api/window";
 /**
  * 显示窗口
  */
-export const showWindow = () => {
-	invoke(WINDOW_PLUGIN.SHOW_WINDOW);
+export const showWindow = (label?: WindowLabel) => {
+	if (label) {
+		emit(LISTEN_KEY.SHOW_WINDOW, label);
+	} else {
+		invoke(WINDOW_PLUGIN.SHOW_WINDOW);
+	}
 };
 
 /**
  * 隐藏窗口
  */
-export const hideWindow = debounce(
-	() => {
-		invoke(WINDOW_PLUGIN.HIDE_WINDOW);
-	},
-	200,
-	{
-		leading: true,
-		trailing: false,
-	},
-);
-
-/**
- * 给窗口添加阴影
- */
-export const setWindowShadow = () => {
-	invoke(WINDOW_PLUGIN.SET_WINDOW_SHADOW);
+export const hideWindow = () => {
+	invoke(WINDOW_PLUGIN.HIDE_WINDOW);
 };
 
 /**
@@ -36,6 +30,58 @@ export const setWindowShadow = () => {
  */
 export const toggleWindowVisible = async () => {
 	const focused = await appWindow.isFocused();
+
+	if (appWindow.label === WINDOW_LABEL.MAIN) {
+		const { window } = clipboardStore;
+
+		if (window.style === "float") {
+			if (!focused && window.position !== "remember") {
+				const monitors = await availableMonitors();
+
+				if (!monitors.length) return;
+
+				const { width, height } = await appWindow.innerSize();
+
+				const [x, y] = await getMouseCoords();
+
+				for (const monitor of monitors) {
+					const {
+						scaleFactor,
+						position: { x: posX, y: posY },
+						size: { width: screenWidth, height: screenHeight },
+					} = monitor;
+
+					const factor = isMac() ? scaleFactor : 1;
+
+					let coordX = x * factor;
+					let coordY = y * factor;
+
+					if (
+						coordX < posX ||
+						coordY < posY ||
+						coordX > posX + screenWidth ||
+						coordY > posY + screenHeight
+					) {
+						continue;
+					}
+
+					if (window.position === "follow") {
+						coordX = Math.min(coordX, posX + screenWidth - width);
+						coordY = Math.min(coordY, posY + screenHeight - height);
+					} else if (window.position === "center") {
+						coordX = posX + (screenWidth - width) / 2;
+						coordY = posY + (screenHeight - height) / 2;
+					}
+
+					appWindow.setPosition(new PhysicalPosition(coordX, coordY));
+
+					break;
+				}
+			}
+		} else {
+			// TODO: dock 风格的位置
+		}
+	}
 
 	if (focused) {
 		hideWindow();
@@ -45,8 +91,8 @@ export const toggleWindowVisible = async () => {
 };
 
 /**
- * 磨砂窗口
+ * 显示任务栏图标
  */
-export const frostedWindow = () => {
-	invoke(WINDOW_PLUGIN.FROSTED_WINDOW);
+export const showTaskbarIcon = (show = true) => {
+	invoke(WINDOW_PLUGIN.SHOW_TASKBAR_ICON, { show });
 };

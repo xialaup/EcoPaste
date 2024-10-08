@@ -9,22 +9,24 @@ interface Option {
 
 const AutoPaste = () => {
 	const { content } = useSnapshot(clipboardStore);
+	const { t } = useTranslation();
 
 	const options: Option[] = [
 		{
-			label: "单击",
+			label: t("preference.clipboard.content_settings.label.auto_paste_single"),
 			value: "single",
 		},
 		{
-			label: "双击",
+			label: t("preference.clipboard.content_settings.label.auto_paste_double"),
 			value: "double",
 		},
 	];
 
 	return (
 		<ProSelect
-			title="自动粘贴"
+			title={t("preference.clipboard.content_settings.label.auto_paste")}
 			value={content.autoPaste}
+			description={t("preference.clipboard.content_settings.hints.auto_paste")}
 			options={options}
 			onChange={(value) => {
 				clipboardStore.content.autoPaste = value;

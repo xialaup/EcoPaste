@@ -4,15 +4,17 @@ import {
 	type UpdateManifest,
 	installUpdate,
 	onUpdaterEvent,
-	checkUpdate as tauriCheckUpdate,
 } from "@tauri-apps/api/updater";
 import type { Timeout } from "ahooks/lib/useRequest/src/types";
-import { Flex, Modal, message } from "antd";
+import { Flex, Modal, Typography, message } from "antd";
 import clsx from "clsx";
+import { isString } from "lodash-es";
 import Markdown from "react-markdown";
 import rehypeRaw from "rehype-raw";
 import { useSnapshot } from "valtio";
 import styles from "./index.module.scss";
+
+const { Link, Text } = Typography;
 
 interface State {
 	open?: boolean;
@@ -20,58 +22,69 @@ interface State {
 	manifest?: UpdateManifest;
 }
 
-const MESSAGE_KEY = "updatable";
+const MESSAGE_KEY = "update";
+
 let timer: Timeout;
 
 const Update = () => {
 	const { env } = useSnapshot(globalStore);
 	const { t } = useTranslation();
-
 	const state = useReactive<State>({});
-
 	const [messageApi, contextHolder] = message.useMessage();
 
 	useMount(() => {
-		listen(LISTEN_KEY.UPDATE, async () => {
+		// 监听更新事件
+		listen<boolean>(LISTEN_KEY.UPDATE_APP, () => {
+			check(true);
+
 			messageApi.open({
 				key: MESSAGE_KEY,
 				type: "loading",
 				content: t("component.app_update.hints.checking_update"),
 				duration: 0,
 			});
-
-			checkUpdate(true);
 		});
 
-		watchKey(globalStore.app, "autoUpdate", (value) => {
+		// 监听自动更新配置变化
+		watchKey(globalStore.update, "auto", (value) => {
 			clearInterval(timer);
 
 			if (!value) return;
 
-			checkUpdate();
+			check();
 
-			timer = setInterval(checkUpdate, 1000 * 60 * 60 * 24);
+			timer = setInterval(check, 1000 * 60 * 60 * 24);
+		});
+
+		// 监听参与测试版本配置变化
+		watchKey(globalStore.update, "beta", (value) => {
+			if (!value) return;
+
+			check();
 		});
 	});
 
-	const updateTime = useCreation(() => {
-		const date = state.manifest?.date?.split(" ")?.slice(0, 2)?.join(" ");
-
-		return dayjs.utc(date).local().format("YYYY-MM-DD HH:mm:ss");
-	}, [state.manifest?.date]);
-
-	const checkUpdate = async (showMessage = false) => {
+	// 检查更新
+	const check = async (showMessage = false) => {
 		try {
-			const { shouldUpdate, manifest } = await tauriCheckUpdate();
+			const { shouldUpdate, manifest } = await checkUpdate(
+				globalStore.update.beta,
+			);
 
 			if (shouldUpdate && manifest) {
 				showWindow();
 
-				messageApi.destroy(MESSAGE_KEY);
+				const { version, body, date } = manifest;
 
-				manifest.body = replaceManifestBody(manifest.body);
+				Object.assign(manifest, {
+					version: `v${version}`,
+					body: replaceManifestBody(body),
+					date: Number(date) * 1000,
+				});
 
 				Object.assign(state, { manifest, open: true });
+
+				messageApi.destroy(MESSAGE_KEY);
 			} else if (showMessage) {
 				messageApi.open({
 					key: MESSAGE_KEY,
@@ -79,17 +92,14 @@ const Update = () => {
 					content: t("component.app_update.hints.latest_version"),
 				});
 			}
-		} catch {
+		} catch (error) {
 			if (!showMessage) return;
 
-			messageApi.open({
-				key: MESSAGE_KEY,
-				type: "error",
-				content: t("component.app_update.hints.update_check_error"),
-			});
+			showErrorMessage(error);
 		}
 	};
 
+	// 替换更新日志里的内容
 	const replaceManifestBody = (body: string) => {
 		return (
 			body
@@ -106,6 +116,19 @@ const Update = () => {
 		);
 	};
 
+	// 显示错误信息
+	const showErrorMessage = (error: unknown) => {
+		state.loading = false;
+
+		const content = isString(error) ? error : JSON.stringify(error);
+
+		messageApi.open({
+			key: MESSAGE_KEY,
+			type: "error",
+			content,
+		});
+	};
+
 	const handleOk = async () => {
 		state.loading = true;
 
@@ -116,29 +139,9 @@ const Update = () => {
 
 			switch (status) {
 				case "DONE":
-					relaunch();
-					break;
-				case "PENDING":
-					messageApi.open({
-						key: MESSAGE_KEY,
-						type: "loading",
-						content: t("component.app_update.hints.downloading_latest_package"),
-						duration: 0,
-					});
-					break;
+					return relaunch();
 				case "ERROR":
-					messageApi.open({
-						key: MESSAGE_KEY,
-						type: "error",
-						content: error,
-					});
-					break;
-				case "UPTODATE":
-					messageApi.open({
-						key: MESSAGE_KEY,
-						type: "success",
-						content: t("component.app_update.hints.download_complete_restart"),
-					});
+					return showErrorMessage(error);
 			}
 		});
 	};
@@ -150,8 +153,10 @@ const Update = () => {
 	return (
 		<>
 			{contextHolder}
+
 			<Modal
 				centered
+				destroyOnClose
 				open={state.open}
 				closable={false}
 				keyboard={false}
@@ -161,6 +166,7 @@ const Update = () => {
 				cancelText={t("component.app_update.button.cancel_update")}
 				className={styles.modal}
 				confirmLoading={state.loading}
+				cancelButtonProps={{ disabled: state.loading }}
 				onOk={handleOk}
 				onCancel={handleCancel}
 			>
@@ -169,15 +175,19 @@ const Update = () => {
 						{t("component.app_update.label.release_version")}：
 						<span>
 							v{env.appVersion} 👉{" "}
-							<a href={`${GITHUB_LINK}/releases/latest`}>
-								v{state.manifest?.version}
-							</a>
+							<Link
+								href={`${GITHUB_LINK}/releases/tag/${state.manifest?.version}`}
+							>
+								{state.manifest?.version}
+							</Link>
 						</span>
 					</Flex>
 
 					<Flex align="center">
 						{t("component.app_update.label.release_time")}：
-						<span>{updateTime}</span>
+						<span>
+							{dayjs(state.manifest?.date).format("YYYY-MM-DD HH:mm:ss")}
+						</span>
 					</Flex>
 
 					<Flex vertical>
@@ -185,6 +195,11 @@ const Update = () => {
 						<Markdown
 							className={clsx(styles.markdown, "max-h-220 overflow-auto")}
 							rehypePlugins={[rehypeRaw]}
+							components={{
+								a: ({ href, children }) => <Link href={href}>{children}</Link>,
+								mark: ({ children }) => <Text mark>{children}</Text>,
+								code: ({ children }) => <Text code>{children}</Text>,
+							}}
 						>
 							{state.manifest?.body}
 						</Markdown>

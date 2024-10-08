@@ -1,16 +1,78 @@
 import type {
-	HistoryItem,
+	ClipboardItem,
 	SelectPayload,
 	TableName,
 	TablePayload,
 } from "@/types/database";
 import { getName } from "@tauri-apps/api/app";
 import { removeFile } from "@tauri-apps/api/fs";
-import { appDataDir } from "@tauri-apps/api/path";
-import { isBoolean, isNil, map, omitBy } from "lodash-es";
+import { find, isBoolean, isNil, map, omitBy, some } from "lodash-es";
 import Database from "tauri-plugin-sql-api";
 
-let db: Database;
+let db: Database | null;
+
+/**
+ * 初始化数据库
+ */
+export const initDatabase = async () => {
+	const appName = await getName();
+	const ext = isDev() ? "dev.db" : "db";
+	const path = joinPath(getSaveDataDir(), `${appName}.${ext}`);
+
+	db = await Database.load(`sqlite:${path}`);
+
+	const createHistoryQuery = (tableName = "history") => {
+		return `
+        CREATE TABLE IF NOT EXISTS ${tableName} (
+			id TEXT PRIMARY KEY,
+			type TEXT,
+			[group] TEXT,
+			value TEXT,
+			search TEXT,
+			count INTEGER,
+			width INTEGER,
+			height INTEGER,
+			favorite INTEGER DEFAULT 0,
+			createTime TEXT,
+			remark TEXT
+		);
+        `;
+	};
+
+	// 创建 `history` 表
+	await executeSQL(createHistoryQuery());
+
+	// 将 `type` 为 rich-text 的更换为 rtf
+	await executeSQL("UPDATE history SET type = ? WHERE type = ?;", [
+		"rtf",
+		"rich-text",
+	]);
+
+	// `isCollected` 更名 `favorite`
+	await renameField("history", "isCollected", "favorite");
+
+	// `size` 更名 `count`
+	await renameField("history", "size", "count");
+
+	// 新增 `remark`
+	await addField("history", "remark", "TEXT");
+
+	// 将 `id` 从 INTEGER 转为 TEXT 类型
+	const fields = await getFields("history");
+	if (find(fields, { name: "id" })?.type === "INTEGER") {
+		const tableName = "temp_history";
+
+		await executeSQL(createHistoryQuery(tableName));
+
+		await executeSQL(
+			`INSERT INTO ${tableName} (id, type, [group], value, search, count, width, height, favorite, createTime, remark) SELECT CAST(id AS TEXT), type, [group], value, search, count, width, height, favorite, createTime, remark FROM history;`,
+		);
+
+		await executeSQL("DROP TABLE history;");
+
+		await executeSQL(`ALTER TABLE ${tableName} RENAME TO history;`);
+	}
+};
 
 /**
  * 处理参数
@@ -33,34 +95,6 @@ const handlePayload = (payload: TablePayload) => {
 };
 
 /**
- * 初始化数据库
- */
-export const initDatabase = async () => {
-	const appName = await getName();
-	const dataDir = await appDataDir();
-	const extensionName = isDev() ? "dev.db" : "db";
-
-	db = await Database.load(`sqlite:${dataDir}${appName}.${extensionName}`);
-
-	await executeSQL(
-		`
-        CREATE TABLE IF NOT EXISTS history (
-			id INTEGER PRIMARY KEY AUTOINCREMENT,
-			type TEXT,
-			[group] TEXT,
-			value TEXT,
-     		search TEXT,
-			width INTEGER,
-			height INTEGER,
-			size INTEGER,
-			createTime TIMESTAMP DEFAULT (DATETIME('now', 'localtime')),
-			isCollected INTEGER DEFAULT 0
-		);
-        `,
-	);
-};
-
-/**
  * 执行 sql 语句
  * @param sql sql 语句
  */
@@ -69,11 +103,11 @@ export const executeSQL = async (query: string, values?: unknown[]) => {
 		await initDatabase();
 	}
 
-	if (query.startsWith("SELECT")) {
-		return await db.select(query, values);
+	if (query.startsWith("SELECT") || query.startsWith("PRAGMA")) {
+		return await db!.select(query, values);
 	}
 
-	await db.execute(query, values);
+	await db!.execute(query, values);
 };
 
 /**
@@ -148,33 +182,68 @@ export const updateSQL = async (
  * @param tableName 表名称
  * @param id 删除数据的 id
  */
-export const deleteSQL = async (tableName: TableName, id?: number) => {
-	const list = await selectSQL<HistoryItem[]>("history", { id });
+export const deleteSQL = async (tableName: TableName, id: string) => {
+	const [item] = await selectSQL<ClipboardItem[]>("history", { id });
 
-	const deleteImageFile = (item: HistoryItem) => {
-		const { type, value = "" } = item;
+	await executeSQL(`DELETE FROM ${tableName} WHERE id = ?;`, [id]);
 
-		if (type !== "image") return;
+	const { type, value = "" } = item;
 
-		removeFile(globalStore.env.saveImageDir + value);
-	};
+	if (type !== "image") return;
 
-	if (id) {
-		await executeSQL(`DELETE FROM ${tableName} WHERE id = ?;`, [id]);
-
-		deleteImageFile(list[0]);
-	} else {
-		await executeSQL(`DELETE FROM ${tableName};`);
-
-		for (const item of list) {
-			deleteImageFile(item);
-		}
-	}
+	removeFile(getSaveImagePath(value));
 };
 
 /**
  * 关闭数据库连接池
  */
 export const closeDatabase = async () => {
-	await db.close();
+	await db?.close();
+
+	db = null;
+};
+
+/**
+ * 获取全部字段
+ * @param tableName 表名
+ */
+const getFields = async (tableName: TableName) => {
+	const fields = await executeSQL(`PRAGMA table_info(${tableName})`);
+
+	return fields as { name: string; type: string }[];
+};
+
+/**
+ * 重命名字段
+ * @param tableName 表名
+ * @param field 字段名称
+ * @param rename 重命名
+ * @returns
+ */
+const renameField = async (
+	tableName: TableName,
+	field: string,
+	rename: string,
+) => {
+	const fields = await getFields(tableName);
+
+	if (some(fields, { name: rename })) return;
+
+	return executeSQL(
+		`ALTER TABLE ${tableName} RENAME COLUMN ${field} TO ${rename};`,
+	);
+};
+
+/**
+ * 新增字段
+ * @param tableName 表名
+ * @param field 字段
+ * @param type 类型
+ */
+const addField = async (tableName: TableName, field: string, type: string) => {
+	const fields = await getFields(tableName);
+
+	if (some(fields, { name: field })) return;
+
+	return executeSQL(`ALTER TABLE ${tableName} ADD COLUMN ${field} ${type};`);
 };

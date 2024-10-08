@@ -2,14 +2,14 @@ import type { ClipboardPayload } from "./plugin";
 
 export type TableName = "history";
 
-export interface HistoryItem extends ClipboardPayload {
-	id: number;
-	group: "text" | "image" | "files";
+export interface ClipboardItem extends ClipboardPayload {
+	id: string;
+	favorite: boolean;
 	createTime: string;
-	isCollected: boolean;
+	remark?: string;
 }
 
-export type TablePayload = Partial<HistoryItem>;
+export type TablePayload = Partial<ClipboardItem>;
 
 export interface SelectPayload extends TablePayload {
 	exact?: boolean;

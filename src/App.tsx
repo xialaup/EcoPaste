@@ -4,52 +4,28 @@ import { appWindow } from "@tauri-apps/api/window";
 import { ConfigProvider, theme } from "antd";
 import { RouterProvider } from "react-router-dom";
 import { useSnapshot } from "valtio";
-import { subscribeKey } from "valtio/utils";
-
 const { defaultAlgorithm, darkAlgorithm } = theme;
+import { listen } from "@tauri-apps/api/event";
+import { isString } from "lodash-es";
+import { error } from "tauri-plugin-log-api";
 
 const App = () => {
 	const { appearance } = useSnapshot(globalStore);
 
 	useMount(() => {
-		appWindow.onThemeChanged(({ payload }) => {
-			if (globalStore.appearance.theme !== "auto") return;
+		// 处理系统主题变化
+		handleSystemThemeChanged();
 
-			globalStore.appearance.isDark = payload === "dark";
-		});
+		// 监听系统主题的变化
+		appWindow.onThemeChanged(handleSystemThemeChanged);
 
-		initDatabase();
-
+		// 生成 antd 的颜色变量
 		generateColorVars();
 
-		watchKey(globalStore.appearance, "language", (value = "zh-CN") => {
-			i18n.changeLanguage(value);
+		// 监听语言的变化
+		watchKey(globalStore.appearance, "language", i18n.changeLanguage);
 
-			setLocale(value);
-		});
-
-		subscribeKey(globalStore.appearance, "theme", async (value) => {
-			let nextTheme = value;
-
-			if (isWin()) {
-				const yes = await ask("切换主题需要重启 app 才能生效！", {
-					okLabel: "重启",
-					cancelLabel: "取消",
-					type: "warning",
-				});
-
-				if (!yes) return;
-			}
-
-			if (nextTheme === "auto") {
-				nextTheme = (await appWindow.theme()) ?? "light";
-			}
-
-			globalStore.appearance.isDark = nextTheme === "dark";
-
-			setTheme(nextTheme);
-		});
-
+		// 监听是否是暗黑模式
 		watchKey(globalStore.appearance, "isDark", (value) => {
 			if (value) {
 				document.documentElement.classList.add("dark");
@@ -57,14 +33,35 @@ const App = () => {
 				document.documentElement.classList.remove("dark");
 			}
 		});
+
+		// 监听显示窗口的事件
+		listen(LISTEN_KEY.SHOW_WINDOW, ({ payload }) => {
+			if (appWindow.label !== payload) return;
+
+			showWindow();
+		});
+
+		// 监听关闭数据库的事件
+		listen(LISTEN_KEY.CLOSE_DATABASE, closeDatabase);
 	});
 
+	// 处理系统主题变化
+	const handleSystemThemeChanged = async () => {
+		if (globalStore.appearance.theme !== "auto") return;
+
+		const systemTheme = await appWindow.theme();
+
+		globalStore.appearance.isDark = systemTheme === "dark";
+	};
+
+	// 生产环境禁用默认的右键菜单
 	useEventListener("contextmenu", (event) => {
 		if (isDev()) return;
 
 		event.preventDefault();
 	});
 
+	// 链接跳转到系统浏览器
 	useEventListener("click", (event) => {
 		const link = (event.target as HTMLElement).closest("a");
 
@@ -81,7 +78,15 @@ const App = () => {
 		open(href);
 	});
 
+	// esc 或者 meta.w 隐藏窗口
 	useOSKeyPress(["esc", "meta.w"], hideWindow);
+
+	// 监听 promise 的错误，输出到日志
+	useEventListener("unhandledrejection", ({ reason }) => {
+		const message = isString(reason) ? reason : JSON.stringify(reason);
+
+		error(message);
+	});
 
 	return (
 		<ConfigProvider

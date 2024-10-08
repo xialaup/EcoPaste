@@ -1,9 +1,11 @@
+use crate::plugins::window::MAIN_WINDOW_TITLE;
 use std::sync::Mutex;
-
 use x11::xlib::{
     self, Atom, Display, XDefaultRootWindow, XFree, XGetInputFocus, XGetWindowProperty,
     XInternAtom, XNextEvent, XOpenDisplay, XSelectInput,
 };
+
+static PREVIOUS_WINDOW: Mutex<Option<u64>> = Mutex::new(None);
 
 fn get_net_wm_name(display: *mut Display, window: u64) -> std::result::Result<String, String> {
     let mut actual_type: Atom = 0;
@@ -42,8 +44,6 @@ fn get_net_wm_name(display: *mut Display, window: u64) -> std::result::Result<St
     }
 }
 
-static FOREMOST_APPS: Mutex<Option<u64>> = Mutex::new(None);
-
 pub fn observe_app() {
     std::thread::spawn(|| unsafe {
         let display = XOpenDisplay(std::ptr::null_mut());
@@ -63,20 +63,27 @@ pub fn observe_app() {
             let mut event = std::mem::zeroed();
             XNextEvent(display, &mut event);
 
-            let mut focus_return: u64 = 0;
+            let mut window: u64 = 0;
             let mut revert_to_return: i32 = 0;
-            XGetInputFocus(display, &mut focus_return, &mut revert_to_return);
+            XGetInputFocus(display, &mut window, &mut revert_to_return);
 
-            if get_net_wm_name(display, focus_return).is_ok_and(|s| s.eq("EcoPaste")) {
+            if window == 1 {
                 continue;
             }
 
-            let mut app = FOREMOST_APPS.lock().unwrap();
-            let _ = app.insert(focus_return);
+            let wm_name = get_net_wm_name(display, window).unwrap_or_default();
+
+            if wm_name.is_empty() || wm_name.eq(MAIN_WINDOW_TITLE) {
+                log::warn!("Ignore window: 0x{:x}", window);
+                continue;
+            }
+
+            let mut previous_window = PREVIOUS_WINDOW.lock().unwrap();
+            let _ = previous_window.insert(window);
         }
     });
 }
 
-pub fn get_foreground_apps() -> Option<u64> {
-    return FOREMOST_APPS.lock().unwrap().clone();
+pub fn get_previous_window() -> Option<u64> {
+    return PREVIOUS_WINDOW.lock().unwrap().clone();
 }

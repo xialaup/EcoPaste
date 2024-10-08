@@ -1,26 +1,32 @@
-export const GITHUB_LINK = "https://github.com/ayangweb/EcoPaste";
+export const GITHUB_LINK = "https://github.com/EcoPasteHub/EcoPaste";
 
-export const GITHUB_ISSUES_LINK = "https://github.com/ayangweb/EcoPaste/issues";
+export const GITHUB_ISSUES_LINK = `${GITHUB_LINK}/issues`;
 
 export const LISTEN_KEY = {
 	ABOUT: "about",
 	GITHUB: "github",
 	GLOBAL_STORE_CHANGED: "global-store-changed",
 	CLIPBOARD_STORE_CHANGED: "clipboard-store-changed",
-	CLEAR_HISTORY: "clear-history",
-	UPDATE: "update",
+	UPDATE_APP: "update-app",
 	TRAY_CLICK: "tray-click",
-	IMPORT_DATA: "import-data",
+	REFRESH_CLIPBOARD_LIST: "refresh-clipboard-list",
 	CHANGE_LANGUAGE: "change-language",
 	TOGGLE_LISTENING: "toggle-listening",
+	SHOW_WINDOW: "show-window",
+	CLIPBOARD_ITEM_PREVIEW: "clipboard-item-preview",
+	CLIPBOARD_ITEM_PASTE: "clipboard-item-paste",
+	CLIPBOARD_ITEM_DELETE: "clipboard-item-delete",
+	CLIPBOARD_ITEM_SELECT_PREV: "clipboard-item-select-prev",
+	CLIPBOARD_ITEM_SELECT_NEXT: "clipboard-item-select-next",
+	TOGGLE_MAIN_WINDOW_VISIBLE: "toggle-main-window-visible",
+	CLOSE_DATABASE: "close-database",
 };
 
 export const WINDOW_PLUGIN = {
 	CREATE_WINDOW: "plugin:window|create_window",
 	SHOW_WINDOW: "plugin:window|show_window",
 	HIDE_WINDOW: "plugin:window|hide_window",
-	SET_WINDOW_SHADOW: "plugin:window|set_window_shadow",
-	FROSTED_WINDOW: "plugin:window|frosted_window",
+	SHOW_TASKBAR_ICON: "plugin:window|show_taskbar_icon",
 };
 
 export const FS_EXTRA_PLUGIN = {
@@ -34,17 +40,17 @@ export const CLIPBOARD_PLUGIN = {
 	HAS_FILES: "plugin:clipboard|has_files",
 	HAS_IMAGE: "plugin:clipboard|has_image",
 	HAS_HTML: "plugin:clipboard|has_html",
-	HAS_RICH_TEXT: "plugin:clipboard|has_rich_text",
+	HAS_RTF: "plugin:clipboard|has_rtf",
 	HAS_TEXT: "plugin:clipboard|has_text",
 	READ_FILES: "plugin:clipboard|read_files",
 	READ_IMAGE: "plugin:clipboard|read_image",
 	READ_HTML: "plugin:clipboard|read_html",
-	READ_RICH_TEXT: "plugin:clipboard|read_rich_text",
+	READ_RTF: "plugin:clipboard|read_rtf",
 	READ_TEXT: "plugin:clipboard|read_text",
 	WRITE_FILES: "plugin:clipboard|write_files",
 	WRITE_IMAGE: "plugin:clipboard|write_image",
 	WRITE_HTML: "plugin:clipboard|write_html",
-	WRITE_RICH_TEXT: "plugin:clipboard|write_rich_text",
+	WRITE_RTF: "plugin:clipboard|write_rtf",
 	WRITE_TEXT: "plugin:clipboard|write_text",
 	CLIPBOARD_UPDATE: "plugin:clipboard://clipboard_update",
 };
@@ -65,9 +71,8 @@ export const THEME_PLUGIN = {
 export const BACKUP_PLUGIN = {
 	EXPORT_DATA: "plugin:backup|export_data",
 	IMPORT_DATA: "plugin:backup|import_data",
+	MOVE_DATA: "plugin:backup|move_data",
 };
-
-export const STORE_FILE_NAME = "store";
 
 export const LANGUAGE = {
 	ZH_CN: "zh-CN",
@@ -85,6 +90,24 @@ export const PASTE_PLUGIN = {
 	PASTE: "plugin:paste|paste",
 };
 
-export const AUTO_LAUNCH_PLUGIN = {
-	IS_AUTO_LAUNCH: "plugin:auto_launch|is_auto_launch",
+export const MACOS_PERMISSIONS_PLUGIN = {
+	CHECK_ACCESSIBILITY_PERMISSIONS:
+		"plugin:macos-permissions|check_accessibility_permissions",
+	REQUEST_ACCESSIBILITY_PERMISSIONS:
+		"plugin:macos-permissions|request_accessibility_permissions",
+	REQUEST_FULL_DISK_ACCESS_PERMISSIONS:
+		"plugin:macos-permissions|request_full_disk_access_permissions",
+};
+
+export const TRAY_PLUGIN = {
+	SET_TRAY_VISIBLE: "plugin:tray|set_tray_visible",
+};
+
+export const WINDOW_LABEL = {
+	MAIN: "main",
+	PREFERENCE: "preference",
+} as const;
+
+export const UPDATER_PLUGIN = {
+	CHECK_UPDATE: "plugin:updater|check_update",
 };

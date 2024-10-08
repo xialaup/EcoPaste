@@ -6,101 +6,192 @@
 				"clipboard": "剪貼簿",
 				"history": "歷史記錄",
 				"general": "通用設定",
-				"shortcut": "快速鍵",
+				"shortcut": "快捷鍵",
 				"backup": "資料備份",
 				"about": "關於"
 			}
 		},
 		"clipboard": {
-			"basic": {
-				"title": "基礎設定",
+			"window_settings": {
+				"title": "視窗設定",
 				"label": {
-					"wake_up_key": "喚醒視窗",
-					"enable_audio": "啟用音效",
-					"search_position": "搜尋位置",
-					"search_position_top": "上方",
-					"search_position_bottom": "下方",
-					"default_focus": "預設焦點",
-					"default_focus_first_item": "第一項",
-					"default_focus_search": "搜尋",
-					"click_paste": "點擊貼上",
-					"dbl_click_feedback": "雙擊反饋",
-					"dbl_click_feedback_none": "無反饋",
-					"dbl_click_feedback_copy": "複製內容",
-					"dbl_click_feedback_paste": "貼上內容",
 					"window_position": "視窗位置",
-					"window_position_default": "預設位置",
+					"window_position_remember": "記住位置",
 					"window_position_follow": "跟隨滑鼠",
-					"window_position_center": "螢幕中央"
+					"window_position_center": "螢幕中央",
+					"back_top": "啟動時回到頂部"
+				},
+				"hints": {
+					"back_top": "啟動視窗時，滾動至頂部並選中首條"
 				}
 			},
-			"history_capacity": {
-				"title": "歷史紀錄容量",
+			"audio_settings": {
+				"title": "音效設定",
+				"label": {
+					"copy_audio": "複製音效"
+				}
+			},
+			"search_box_settings": {
+				"title": "搜尋框設定",
+				"label": {
+					"default_focus": "預設焦點",
+					"auto_clear": "自動清除",
+					"position": "搜尋框位置",
+					"position_top": "頂部",
+					"position_bottom": "底部"
+				},
+				"hints": {
+					"default_focus": "啟動視窗時，默認聚焦蒐索框",
+					"auto_clear": "啟動視窗時，清除蒐索框內容"
+				}
+			},
+			"content_settings": {
+				"title": "剪貼簿內容",
+				"label": {
+					"auto_paste": "自動貼上",
+					"auto_paste_single": "單擊",
+					"auto_paste_double": "雙擊",
+					"image_ocr": "圖片 OCR",
+					"copy_as_plain": "複製為純文字",
+					"paste_as_plain": "粘貼為純文字"
+				},
+				"hints": {
+					"auto_paste": "當使用滑鼠左鍵時，快速將內容貼上到輸入位置",
+					"image_ocr": "注意：使用前請務必先下載",
+					"copy_as_plain": "富文字和HTML格式在複製時僅保留純文字內容",
+					"paste_as_plain": "富文字和 HTML 格式在粘貼時僅保留純文字內容"
+				}
+			}
+		},
+		"history": {
+			"history": {
+				"title": "歷史記錄",
 				"button": {
-					"clear": "清空"
+					"goto_delete": "刪除歷史記錄",
+					"confirm_delete": "確定",
+					"cancel_delete": "取消"
 				},
 				"label": {
-					"duration": {
+					"duration": "保留時長",
+					"duration_unit": {
 						"day": "天",
 						"week": "週",
 						"month": "月",
-						"quarter": "季度",
-						"half_year": "半年",
-						"year": "年",
-						"unlimited": "無限"
-					}
+						"year": "年"
+					},
+					"delete_title": "刪除歷史記錄",
+					"time_range": "時間範圍",
+					"time_range_opt": {
+						"last_hour": "過去 1 小時",
+						"last_24_hours": "過去 24 小時",
+						"last_7_days": "過去 7 天",
+						"last_30_days": "過去 30 天",
+						"unlimited": "時間不限",
+						"custom": "自定義"
+					},
+					"include_favorite": "刪除收藏"
 				},
 				"hints": {
-					"clear_confirm": "確定要清空歷史紀錄嗎？"
+					"duration": "輸入 0 表示永久保留，收藏在自動刪除時將保留",
+					"delete_success": "刪除成功"
 				}
 			}
 		},
 		"settings": {
-			"basic": {
-				"title": "基礎設定",
+			"permission_settings": {
+				"title": "權限設定",
+				"button": {
+					"confirm_full_disk_access": "前往系統設定開啟",
+					"cancel_full_disk_access": "稍後開啟",
+					"authorize": "前往授權"
+				},
 				"label": {
-					"auto_start": "開機自啟",
-					"auto_update": "自動更新",
-					"wake_up_key": "喚醒視窗",
+					"accessibility_permissions": "輔助功能訪問權限",
+					"full_disk_access_permissions": "完全磁碟訪問權限",
+					"confirm_full_disk_access": "需要開啟完全磁碟訪問權限",
+					"authorized": "已授權"
+				},
+				"hints": {
+					"accessibility_permissions": "需要輔助功能訪問權限來操作剪貼簿內容",
+					"full_disk_access_permissions": "需要完全磁碟訪問權限來實現文件預覽",
+					"confirm_full_disk_access": "需要開啟完全磁碟訪問權限來實現文件預覽"
+				}
+			},
+			"app_settings": {
+				"title": "應用設定",
+				"label": {
+					"auto_start": "登入時啟動",
+					"show_menubar_icon": "顯示功能表列圖標",
+					"show_taskbar_icon": "顯示工作列圖標"
+				}
+			},
+			"appearance_settings": {
+				"title": "外觀設定",
+				"label": {
+					"language": "界面語言",
 					"theme": "主題模式",
-					"theme_auto": "自動",
-					"theme_light": "亮色",
-					"theme_dark": "暗色",
-					"language": "語言選擇",
-					"tray_click": "單擊系統托盤",
-					"tray_click_none": "無操作",
-					"tray_click_show": "顯示應用"
+					"theme_auto": "跟隨系統",
+					"theme_light": "亮色模式",
+					"theme_dark": "暗色模式"
+				},
+				"hints": {
+					"theme": "注意：切換主題時，應用將會自動重啟"
+				}
+			},
+			"app_update": {
+				"title": "應用更新",
+				"label": {
+					"auto_update": "自動檢查更新",
+					"update_beta": "參與測試版體驗"
+				},
+				"hints": {
+					"update_beta": "將會接收測試版更新，即使它們可能不穩定"
+				}
+			}
+		},
+		"shortcut": {
+			"shortcut": {
+				"title": "快捷鍵",
+				"label": {
+					"open_clipboard": "打開剪貼簿視窗",
+					"open_settings": "打開偏好設定視窗",
+					"quick_paste": "快速貼上",
+					"paste_as_plain": "貼上為純文字"
+				},
+				"hints": {
+					"quick_paste": "隱藏視窗時，使用數字鍵快速貼上前九項",
+					"paste_as_plain": "將內容貼上為純文字或 OCR 文本"
 				}
 			}
 		},
 		"data_backup": {
-			"import_export": {
-				"title": "匯入和匯出",
+			"storage_settings": {
+				"title": "存儲設定",
 				"label": {
-					"import_confirm_title": "匯入須知",
-					"export_confirm_title": "匯出須知"
-				},
-				"button": {
-					"open_dir": "打開存儲目錄",
-					"import": "匯入資料",
-					"export": "匯出資料",
-					"confirm_export": "開始匯出",
-					"confirm": "確定",
-					"cancel": "取消"
+					"data_storage_path": "資料存儲路徑",
+					"log_storage_path": "日誌存儲路徑"
 				},
 				"hints": {
-					"import_confirm": "匯入的資料會完全覆蓋所有的偏好設定以及所有的剪貼簿歷史資料，你確定要匯入嗎？",
-					"export_confirm": "匯出的資料包含所有的偏好設定以及所有的剪貼簿歷史資料。",
-					"importing": "正在匯入",
-					"exporting": "正在匯出",
-					"import_success": "匯入成功"
+					"custom_path": "自訂",
+					"default_path": "恢復預設",
+					"change_success": "更改成功"
+				}
+			},
+			"import_export": {
+				"title": "導入和導出",
+				"button": {
+					"import": "導入數據",
+					"export": "導出數據"
+				},
+				"hints": {
+					"import_success": "導入成功"
 				}
 			}
 		},
 		"about": {
 			"button": {
 				"copy_info": "複製資訊",
-				"feedback_issue": "回饋資訊"
+				"feedback_issue": "回報問題"
 			},
 			"hints": {
 				"introduce": "開源的跨平台剪貼簿工具，讓您的工作更加高效便捷。",
@@ -124,11 +215,7 @@
 				"download_image": "下載圖片",
 				"show_in_finder": "在 Finder 中顯示",
 				"show_in_file_explorer": "在檔案總管中顯示",
-				"delete": "刪除",
-				"delete_above": "刪除上方",
-				"delete_below": "刪除下方",
-				"delete_other": "刪除其他",
-				"delete_all": "刪除所有"
+				"delete": "刪除"
 			}
 		},
 		"label": {
@@ -137,21 +224,20 @@
 				"text": "文字",
 				"image": "圖片",
 				"files": "文件",
-				"collection": "收藏"
+				"favorite": "收藏"
 			},
 			"link": "連結",
 			"email": "信箱",
 			"color": "顏色",
 			"plain_text": "純文字",
-			"rich_text": "富文字",
+			"rtf": "富文字",
 			"html": "HTML",
 			"image": "圖片",
 			"n_files": "{{0}}個檔案",
 			"n_chars": "{{0}}個字元"
 		},
 		"hints": {
-			"search_placeholder": "搜尋",
-			"delete_confirm": "確定刪除該歷史紀錄？"
+			"search_placeholder": "搜尋"
 		}
 	},
 	"component": {
@@ -174,19 +260,7 @@
 			},
 			"hints": {
 				"checking_update": "正在檢查更新...",
-				"latest_version": "當前已是最新版本🎉",
-				"update_check_error": "檢查更新時出錯，請檢查網路並重試。",
-				"downloading_latest_package": "正在下載最新的安裝包...",
-				"download_complete_restart": "下載完成，即將開始安裝並重新啟動應用。"
-			}
-		},
-		"use_theme": {
-			"button": {
-				"confirm_reboot": "重新啟動",
-				"cancel": "取消"
-			},
-			"hints": {
-				"reboot_confirm": "切換主題需要重新啟動應用才能生效！"
+				"latest_version": "當前已是最新版本🎉"
 			}
 		}
 	}

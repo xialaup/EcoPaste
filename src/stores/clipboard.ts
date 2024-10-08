@@ -3,7 +3,9 @@ import proxyWithPersist from "valtio-persist";
 
 export const CLIPBOARD_STORE_INITIAL_STATE: ClipboardStore = {
 	window: {
-		position: "default",
+		style: "float",
+		position: "remember",
+		backTop: false,
 	},
 
 	audio: {
@@ -19,7 +21,8 @@ export const CLIPBOARD_STORE_INITIAL_STATE: ClipboardStore = {
 	content: {
 		autoPaste: "double",
 		ocr: true,
-		copyPlainText: false,
+		copyPlain: false,
+		pastePlain: false,
 	},
 
 	history: {

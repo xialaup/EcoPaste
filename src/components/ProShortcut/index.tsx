@@ -1,7 +1,14 @@
 import { Flex } from "antd";
-import { isEmpty, isEqual } from "arcdash";
 import clsx from "clsx";
-import { find, intersectionWith, map, remove, some } from "lodash-es";
+import {
+	find,
+	intersectionWith,
+	isEmpty,
+	isEqual,
+	map,
+	remove,
+	some,
+} from "lodash-es";
 import type { FC, KeyboardEvent, MouseEvent } from "react";
 import Icon from "../Icon";
 import ProListItem from "../ProListItem";
@@ -10,7 +17,7 @@ import { type Key, keys, modifierKeys, normalKeys } from "./keys";
 interface ProShortcutProps {
 	title: string;
 	description?: string;
-	defaultValue?: string;
+	value?: string;
 	onChange?: (value: string) => void;
 }
 
@@ -19,14 +26,14 @@ interface State {
 }
 
 const ProShortcut: FC<ProShortcutProps> = (props) => {
-	const { title, description, defaultValue = "", onChange } = props;
+	const { title, description, value = "", onChange } = props;
 
 	const { t } = useTranslation();
 
 	const handleDefaultValue = () => {
-		if (!defaultValue) return [];
+		if (!value) return [];
 
-		return defaultValue.split("+").map((shortcut) => find(keys, { shortcut })!);
+		return value.split("+").map((shortcut) => find(keys, { shortcut })!);
 	};
 
 	const containerRef = useRef<HTMLElement>(null);
@@ -98,7 +105,13 @@ const ProShortcut: FC<ProShortcutProps> = (props) => {
 		return intersectionWith(state.value, normalKeys, isEqual)[0];
 	};
 
-	const registrable = () => hasModifierKey() && getNormalKey();
+	const registrable = () => {
+		if (state.value.length === 1) {
+			return /^F\d{1,2}$/.test(state.value[0].shortcut!);
+		}
+
+		return hasModifierKey() && getNormalKey();
+	};
 
 	const handleClear = (event: MouseEvent) => {
 		event.preventDefault();

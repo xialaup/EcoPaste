@@ -1,13 +1,15 @@
 use tauri::{
-    command, generate_handler,
+    async_runtime, command, generate_handler,
     plugin::{Builder, TauriPlugin},
-    Window, Wry,
+    AppHandle, Manager, Window, Wry,
 };
 
 // 主窗口的label
 pub static MAIN_WINDOW_LABEL: &str = "main";
 // 偏好设置窗口的label
 pub static PREFERENCE_WINDOW_LABEL: &str = "preference";
+// 主窗口的title
+pub static MAIN_WINDOW_TITLE: &str = "EcoPaste";
 
 // 显示窗口（非linux）
 #[cfg(not(target_os = "linux"))]
@@ -36,26 +38,44 @@ pub async fn hide_window(window: Window) {
     window.hide().unwrap();
 }
 
-// 给窗口添加阴影
-#[command]
-pub async fn set_window_shadow(window: Window) {
-    #[cfg(not(target_os = "linux"))]
-    window_shadows::set_shadow(&window, true).unwrap();
+// 显示主窗口
+pub fn show_main_window(app_handle: &AppHandle) {
+    let window = app_handle.get_window(MAIN_WINDOW_LABEL).unwrap();
 
-    let _ = window;
+    async_runtime::spawn(async move {
+        show_window(window).await;
+    });
 }
 
-// 磨砂窗口：https://github.com/tauri-apps/window-vibrancy
+// 显示偏好设置窗口
+pub fn show_preference_window(app_handle: &AppHandle) {
+    let window = app_handle.get_window(PREFERENCE_WINDOW_LABEL).unwrap();
+
+    async_runtime::spawn(async move {
+        show_window(window).await;
+    });
+}
+
+// 显示任务栏图标
 #[command]
-pub fn frosted_window(window: Window) {
+pub fn show_taskbar_icon(window: Window, show: bool) {
+    #[cfg(not(target_os = "macos"))]
+    window.set_skip_taskbar(!show).unwrap();
+
     #[cfg(target_os = "macos")]
-    window_vibrancy::apply_vibrancy(
-        &window,
-        window_vibrancy::NSVisualEffectMaterial::Sidebar,
-        Some(window_vibrancy::NSVisualEffectState::Active),
-        Some(10.0),
-    )
-    .unwrap();
+    {
+        use cocoa::appkit::{NSApp, NSApplication, NSApplicationActivationPolicy::*};
+
+        unsafe {
+            let app = NSApp();
+
+            if show {
+                app.setActivationPolicy_(NSApplicationActivationPolicyRegular);
+            } else {
+                app.setActivationPolicy_(NSApplicationActivationPolicyAccessory);
+            }
+        }
+    }
 
     let _ = window;
 }
@@ -65,8 +85,7 @@ pub fn init() -> TauriPlugin<Wry> {
         .invoke_handler(generate_handler![
             show_window,
             hide_window,
-            set_window_shadow,
-            frosted_window
+            show_taskbar_icon
         ])
         .build()
 }

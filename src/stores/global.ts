@@ -1,7 +1,7 @@
 import type { GlobalStore } from "@/types/store";
 import { getName, getVersion } from "@tauri-apps/api/app";
 import { type } from "@tauri-apps/api/os";
-import { appDataDir, sep } from "@tauri-apps/api/path";
+import { appDataDir } from "@tauri-apps/api/path";
 import proxyWithPersist, {
 	PersistStrategy,
 	type ProxyPersistStorageEngine,
@@ -20,7 +20,8 @@ export const persistStrategies = PersistStrategy.MultiFile;
 export const GLOBAL_STORE_INITIAL_STATE: GlobalStore = {
 	app: {
 		autoStart: false,
-		autoUpdate: false,
+		showMenubarIcon: true,
+		showTaskbarIcon: false,
 	},
 
 	appearance: {
@@ -28,8 +29,18 @@ export const GLOBAL_STORE_INITIAL_STATE: GlobalStore = {
 		isDark: false,
 	},
 
+	update: {
+		auto: false,
+		beta: false,
+	},
+
 	shortcut: {
 		clipboard: "Alt+C",
+		preference: "Alt+X",
+		quickPaste: {
+			enable: false,
+			value: "Command+Shift",
+		},
 	},
 
 	env: {},
@@ -51,7 +62,7 @@ subscribeKey(globalStore._persist, "loaded", async (loaded) => {
 	globalStore.env.platform = await type();
 	globalStore.env.appName = await getName();
 	globalStore.env.appVersion = await getVersion();
-	globalStore.env.saveImageDir = `${await appDataDir()}images${sep}`;
+	globalStore.env.saveDataDir ??= await appDataDir();
 });
 
 // subscribeKey 但是首次使用执行

@@ -11,7 +11,8 @@ export interface GlobalStore {
 	// 应用设置
 	app: {
 		autoStart: boolean;
-		autoUpdate: boolean;
+		showMenubarIcon: boolean;
+		showTaskbarIcon: boolean;
 	};
 
 	// 外观设置
@@ -21,18 +22,28 @@ export interface GlobalStore {
 		language?: Language;
 	};
 
+	update: {
+		auto: boolean;
+		beta: boolean;
+	};
+
 	// 快捷键设置
 	shortcut: {
 		clipboard: string;
 		preference?: string;
+		quickPaste: {
+			enable: boolean;
+			value: string;
+		};
+		pastePlain?: string;
 	};
 
-	// 非配置项，只提供给全局使用
+	// 只在当前系统环境使用
 	env: {
 		platform?: OsType;
 		appName?: string;
 		appVersion?: string;
-		saveImageDir?: string;
+		saveDataDir?: string;
 	};
 }
 
@@ -41,7 +52,9 @@ export type ClickFeedback = "none" | "copy" | "paste";
 export interface ClipboardStore {
 	// 窗口设置
 	window: {
-		position: "default" | "follow" | "center";
+		style: "float" | "dock";
+		position: "remember" | "follow" | "center";
+		backTop: boolean;
 	};
 
 	// 音效设置
@@ -60,7 +73,8 @@ export interface ClipboardStore {
 	content: {
 		autoPaste: "single" | "double";
 		ocr: boolean;
-		copyPlainText: boolean;
+		copyPlain: boolean;
+		pastePlain: boolean;
 	};
 
 	// 历史记录

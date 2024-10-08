@@ -5,16 +5,6 @@ import { name, version } from "../package.json";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-const updateReadmeVersion = () => {
-	const path = resolve(__dirname, "..", "README.md");
-
-	let content = readFileSync(path, "utf-8");
-
-	content = content.replace(/(\d+\.\d+\.\d+)/g, version);
-
-	writeFileSync(path, content);
-};
-
 const updateCargoVersion = () => {
 	const tomlPath = resolve(__dirname, "..", "src-tauri", "Cargo.toml");
 	const lockPath = resolve(__dirname, "..", "src-tauri", "Cargo.lock");
@@ -23,7 +13,7 @@ const updateCargoVersion = () => {
 		let content = readFileSync(path, "utf-8");
 
 		const regexp = new RegExp(
-			`(name\\s*=\\s*"${name}"\\s*version\\s*=\\s*)"\\d+.\\d+.\\d+"`,
+			`(name\\s*=\\s*"${name}"\\s*version\\s*=\\s*)"(\\d+\\.\\d+\\.\\d+(-\\w+\\.\\d+)?)"`,
 		);
 
 		content = content.replace(regexp, `$1"${version}"`);
@@ -32,5 +22,4 @@ const updateCargoVersion = () => {
 	}
 };
 
-updateReadmeVersion();
 updateCargoVersion();

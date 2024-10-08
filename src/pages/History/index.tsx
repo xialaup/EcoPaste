@@ -1,70 +1,56 @@
+import EcoSelect from "@/components/EcoSelect";
 import ProList from "@/components/ProList";
 import ProListItem from "@/components/ProListItem";
-import { emit } from "@tauri-apps/api/event";
-import { Button, InputNumber, Select, Space } from "antd";
+import { InputNumber } from "antd";
 import { useSnapshot } from "valtio";
+import Delete from "./components/Delete";
 
 const History = () => {
 	const { history } = useSnapshot(clipboardStore);
+	const { t } = useTranslation();
 
 	const unitOptions = [
 		{
-			label: "天",
+			label: t("preference.history.history.label.duration_unit.day"),
 			value: 1,
 		},
 		{
-			label: "周",
+			label: t("preference.history.history.label.duration_unit.week"),
 			value: 7,
 		},
 		{
-			label: "月",
+			label: t("preference.history.history.label.duration_unit.month"),
 			value: 30,
 		},
 		{
-			label: "年",
+			label: t("preference.history.history.label.duration_unit.year"),
 			value: 365,
 		},
 	];
 
-	const handleClear = async () => {
-		const yes = await ask("你确定要清除所有历史记录（包括收藏）吗？", {
-			title: "清除历史记录",
-			okLabel: "确定",
-			cancelLabel: "取消",
-			type: "warning",
-		});
-
-		if (!yes) return;
-
-		emit(LISTEN_KEY.CLEAR_HISTORY);
-	};
-
 	return (
-		<ProList
-			header="历史记录"
-			footer={
-				<Button block danger onClick={handleClear}>
-					清除历史记录
-				</Button>
-			}
-		>
-			<ProListItem title="保留时长" description="输入 0 则表示永久保留">
-				<Space.Compact>
-					<InputNumber
-						min={0}
-						value={history.duration}
-						onChange={(value) => {
-							clipboardStore.history.duration = value ?? 0;
-						}}
-					/>
-					<Select
-						value={history.unit}
-						options={unitOptions}
-						onChange={(value) => {
-							clipboardStore.history.unit = value ?? 0;
-						}}
-					/>
-				</Space.Compact>
+		<ProList header={t("preference.history.history.title")} footer={<Delete />}>
+			<ProListItem
+				title={t("preference.history.history.label.duration")}
+				description={t("preference.history.history.hints.duration")}
+			>
+				<InputNumber
+					min={0}
+					className="w-130"
+					value={history.duration}
+					addonAfter={
+						<EcoSelect
+							value={history.unit}
+							options={unitOptions}
+							onChange={(value) => {
+								clipboardStore.history.unit = value ?? 0;
+							}}
+						/>
+					}
+					onChange={(value) => {
+						clipboardStore.history.duration = value ?? 0;
+					}}
+				/>
 			</ProListItem>
 		</ProList>
 	);

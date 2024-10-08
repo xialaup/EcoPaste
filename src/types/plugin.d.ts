@@ -1,3 +1,5 @@
+export type WindowLabel = (typeof WINDOW_LABEL)[keyof typeof WINDOW_LABEL];
+
 export interface Metadata {
 	size: number;
 	isDir: boolean;
@@ -13,8 +15,9 @@ export interface ReadImage {
 }
 
 export interface ClipboardPayload {
-	type?: "text" | "rich-text" | "html" | "image" | "files";
-	size: number;
+	type?: "text" | "rtf" | "html" | "image" | "files";
+	group: "text" | "image" | "files";
+	count: number;
 	value: string;
 	search: string;
 	width?: number;
